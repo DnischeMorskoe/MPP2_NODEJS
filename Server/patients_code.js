@@ -3,6 +3,22 @@ const date_helper = require('./date_helper.js');
 const patientsData = "patients.json";
 
 
+
+
+module.exports.initializePatientsFile = function() {
+	fs.createFile(patientsData, function(err) {
+		if (err !== undefined && err !== null) {
+			console.log('Initalize file error: ' + err); 
+		} else {
+			let data = fs.readFileSync(patientsData, "utf8");
+			if (data.length == 0) {
+				fs.writeJson(patientsData, [], function(err) { });
+			}
+		}
+	})
+}
+
+
 function AllPatients() {
 	let data = "";
 	let patients = [];
@@ -24,99 +40,34 @@ function AllPatients() {
 	return patients;
 }
 
-
-module.exports.main = function(req, res) {
+module.exports.getAllPatients = function(req, res) {
 	let patients = AllPatients();
+	res.send(patients);
+}
+
+
+module.exports.healthy = function(req, res) {
+	if(!req.body || !req.query) return res.sendStatus(400);
+	let patients = AllPatients();
+	let id = req.query.id;
+	let status = req.body.status;
+
+	for (var i = patients.length - 1; i >= 0; i--) {
+		if (patients[i].id == id) {
+			patients[i].complete = status;
+			console.log('HEALTH STATUS CHANGED', patients[i]);
+			break;
+		}
+	}
 	
-	res.render("Main_page.hbs", 
-	{
-		tableVisible: patients.length > 0,
-		patients: patients
-	});
+	RewritePatients(patients);
+	res.send(patients);
 }
-
-
-module.exports.new = function(req, res) {
-	let patient = {
-		id:"",
-   		pet_type:"", 
-   	 	name:"",
-    	doctor_name:"",
-    	diagnosis:"",
-    	notes: "",
-    	date:""
-	};
-
-	res.render("new_patient.hbs", 
-	{
-		patient: patient
-	});
-}
-
 
 function RewritePatients(patients) {
 	let data = JSON.stringify(patients);
 	fs.writeFileSync("patients.json", data);
 }
-
-module.exports.add = function(req, res) {
-	
-
-	if(!req.body) return res.sendStatus(400);
-
-	let patients = AllPatients();
-	let patient = {
-		id: 0,//req.body.id,
-		pet_type: req.body.pet_typee,
-		name: req.body.name,
-		 doctor_name: req.body.doctor_name,
-		 diagnosis: req.body.diagnosis,
-		 notes: req.body.notes,
-		 date: req.body.date
-	};
-	if (patient.pet_type == "Другое") {
-		patient.pet_type = req.body.diff;
-	}
-
-	if (patient.id == '0') {
-		 
-	    let maxId = Math.max.apply(Math, patients.map(function(o) {
-	    	return o.id;
-	    }));
-
-	    if (maxId == Infinity) {
-	    	maxId = 0;
-	    }
-
-	    patient.id = maxId + 1;
-		
-	    patients.push(patient);
-
-	    if (!fs.existsSync('./files/' + patient.id)) {
-	    	fs.mkdir('./files/' + patient.id, {recursive: true}, (err) => {
-	    		if (err) throw err;
-	    	});
-	    }	    
-
-	} else {
-		for (var i = patients.length - 1; i >= 0; i--) {
-			if (patients[i].id == patient.id) {
-				patients[i].pet_type = patient.pet_type;
-				patients[i].name = patient.name;
-				patients[i].doctor_name = patient.doctor_name;
-				patients[i].diagnosis = patient.diagnosis;
-				patients[i].notes = patient.notes;
-				patients[i].date = patient.date;
-				break;
-			}
-		}	
-	}
-	
-	RewritePatients(patients);
-	res.redirect("/details?id=" + patient.id);
-	
-}
-
 
 
 function GetPatient(patientId) {
@@ -134,51 +85,86 @@ function GetPatient(patientId) {
 	return patient;
 }
 
-module.exports.edit = function(req, res) {
+
+module.exports.getPatient = function(req, res) {
+	if(!req.query) return res.sendStatus(400);
 	let patient = GetPatient(req.query.id);
 
 	if (patient != null) {
-		res.render("new_patient.hbs", {
-			patient: patient
-		});
+		res.send(patient);
 	} else {
-		res.status(404).send();
+		res.sendStatus(404);
 	}
 }
 
 
-module.exports.details = function(req, res) {
-	let patient = GetPatient(req.query.id);
-	let files = [];
 
-	if (fs.existsSync('./files/' + req.query.id)) {
-		files = fs.readdirSync('./files/' + req.query.id);
-	}
-	 
-	//console.log(files);
+module.exports.addPatient = function(req, res) {
+	if(!req.body) return res.sendStatus(400);
 
-	if (patient != null) {
-		res.render("patient.hbs", 
-		{
-			patient: patient,
-			files: files,
-			showTable: files.length > 0,
-			showDate: patient.date != ''
-		});
-	} else {
-		res.status(404).send();
+	let patients = AllPatients();
+	let patient = {
+		id: null,
+		pet_type: request.body.patient.pet_type,
+		name: request.body.patient.name,
+		content: request.body.patient.content,
+		doctor_name: request.body.patient.doctor_name,
+		diagnosis: request.body.patient.diagnosis,
+		notes: request.body.patient.notes,
+		date: request.body.patient.date,
+		healthy: false
+	};
+
+	let maxId = Math.max.apply(Math, patients.map(parsePatient => parsePatient.id));
+
+	if (maxId == Infinity || maxId == -Infinity) {
+		maxId = 0;
 	}
-	//res.redirect("/");
-	//res.render("patient.hbs");
+
+	patient.id = maxId + 1;
+	patients.push(patient);
+	console.log('ADDED', patient);
+	RewriteNotes(patients);
+	res.send(patient);
 }
 
-module.exports.delete = function(req, res) {
+
+
+module.exports.updatePatient = function(req, res) {
+	if(!req.body) return res.sendStatus(400);
+	let patients = AllPatients();
+
+	for (var i = patients.length - 1; i >= 0; i--) {
+		if (patients[i].id == req.body.note.id) {
+
+			patients[i].pet_type = req.body.patient.pet_type;
+			patients[i].name = req.body.patient.name;
+			patients[i].content = req.body.patient.content;
+			patients[i].doctor_name = req.body.patient.doctor_name;
+			patients[i].diagnosis = req.body.patient.diagnosis;
+			patients[i].notes = req.body.patient.notes;
+			patients[i].date = req.body.note.date;
+			console.log('UPDATED', patients[i]);
+			break;
+		}
+	}	
+	
+	
+	RewritePatients(patients);
+	res.sendStatus(200);
+}
+
+
+
+module.exports.deletePatient = function(req, res) {
+	if(!req.query) return res.sendStatus(400);
     let id = req.query.id;
     let patients = AllPatients();
     let index = -1;
 
     for(var i = 0; i < patients.length; i++) {
         if(patients[i].id == id){
+			console.log('DELETED', patients[i]);
             index = i;
             break;
         }
@@ -188,11 +174,7 @@ module.exports.delete = function(req, res) {
         patients.splice(index, 1)[0];
         RewritePatients(patients);
 
-        fs.remove('./files/' + id, err => {
-        	if (err) return console.error(err);
-        });
-
-        res.redirect("/");
+		response.sendStatus(200);
     } else {
         res.status(404).send();
     }
@@ -200,41 +182,3 @@ module.exports.delete = function(req, res) {
 
 
 
-module.exports.filter = function(req, res) {
-	if(!req.body) return res.sendStatus(400);
-   let patients = AllPatients();
-   let status = req.body.pet_type;
-   let filtredPatients = [];
-
-   if (status == 'Все') {
-	filtredPatients = patients;
-   } else {
-	   if (status != 'Другое') {
-		filtredPatients = patients.filter(patient => patient.pet_type == status );
-	   } else {
-		filtredPatients = DiffAnim(patients);
-	   }
-   }
-
- //  console.log(status);
-  // console.log(filtredPatients);
-
-   res.render("Main_page.hbs", 
-   {
-	   tableVisible: filtredPatients.length > 0,
-	   patients: filtredPatients
-   });
-}
-
-function DiffAnim (patients) {
-	let diffAnim = [];
-	for(var i = 0; i < patients.length; i++) {
-        if((patients[i].pet_type != "Кот") && (patients[i].pet_type != "Собака") 
-		&& (patients[i].pet_type != "Грызун") && (patients[i].pet_type != "Пернатое")
-		 && (patients[i].pet_type != "Кошка")) {
-            diffAnim.push(patients[i]);
-        }
-
-    }
-	return diffAnim;
-}
