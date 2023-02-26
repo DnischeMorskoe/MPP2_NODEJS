@@ -9,7 +9,7 @@ class PatientDetails extends React.Component {
     }
 
     handleHealthyCheckbox = (e) => {
-        Axios.patch(`http://localhost:3001/api/healthy/patient?id=${ e.target.id }`, { status: e.target.checked })
+        Axios.patch(`http://localhost:8000/api/healthy/patient?id=${ e.id }`, { status: e.checked })
             .then(response => 
                     this.setState({
                         patients: response.data 
@@ -18,15 +18,16 @@ class PatientDetails extends React.Component {
     }
 
     handleDelete = (e) => {
-        Axios.delete(`http://localhost:3001/api/delete/patient?id=${ this.state.patient.id }`)
+        Axios.delete(`http://localhost:8000/api/delete/patient?id=${ this.state.patient.id }`)
             .then(response => 
                     this.props.history.push('/')
                 )
     }
 
     componentDidMount() {
+        console.log(5);
         const id = this.props.match.params.patient_id;
-        Axios.get(`http://localhost:3001/api/patient?id=${ id }`)
+        Axios.get(`http://localhost:8000/api/patient?id=${ id }`)
             .then(response => this.setState({
                 patient: response.data
             }))
@@ -38,8 +39,8 @@ class PatientDetails extends React.Component {
            <div className="patient card">
                    <div className="card-content">
                    <h2>Карточка пациента</h2> <hr/>
-                   
-                       <span className="card-title center"> <h1>{this.state.patient.patient.pet_type} {this.state.patient.patient.name}</h1></span>
+                   {/* //{this.state.patient.patient.pet_type} */}
+                       <span className="card-title center"> <h1> {this.state.patient.name}</h1></span>
                        
                    </div>
                    <div className="card-action row valign-wrapper">
@@ -53,8 +54,8 @@ class PatientDetails extends React.Component {
                        <div className="col s4 left-align">
                            <form>
                                <label>
-                                   <input type="checkbox" id={this.state.patient.id} onClick={this.handleCompleteCheckbox} defaultChecked={this.state.patient.complete} className="complete-checkbox" />
-                                   <span>Complete</span>
+                                   <input type="checkbox" id={this.state.patient.id} onClick={this.handleCompleteCheckbox} defaultChecked={this.state.patient.healthy} className="complete-checkbox" />
+                                   <span>Здоров</span>
                                </label>
                            </form>
                        </div>
@@ -63,7 +64,7 @@ class PatientDetails extends React.Component {
                            <p>{this.state.patient.date}</p>
                        </div>
                        <div className="col s4 right-align">
-                           <button className="btn red darken-3 " onClick={this.handleDelete}>
+                           <button className="btn  amber darken-1 " onClick={this.handleDelete}>
                                <i className="material-icons right">delete</i>
                                Delete
                            </button>

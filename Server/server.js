@@ -21,7 +21,7 @@ server.use(bodyParser.json());
 
 server.patch('/api/healthy/patient', patients_code.healthy);
 server.delete('/api/delete/patient', patients_code.deletePatient);
-server.put('/api/update/patient', patients_code.updatePatient);
+server.put('/api/update/patient/:id', patients_code.updatePatient);
 server.post('/api/add/patient', patients_code.addPatient);
 
 server.get('/api/patient/all', patients_code.getAllPatients);

@@ -19,6 +19,28 @@
 
 }
 
+
+.myDiv1{
+  width: 50% !important;  
+  margin: auto; 
+  justify-content: space-between;
+}
+
+.myDiv2{
+  width: 100%;
+}
+
+.custom-select
+{
+  background-color: #fff3cd !important;
+}
+
+
+
+
+
+
+
 /* 
 .App-logo {
   height: 40vmin;

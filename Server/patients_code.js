@@ -100,18 +100,19 @@ module.exports.getPatient = function(req, res) {
 
 
 module.exports.addPatient = function(req, res) {
+	console.log(req.body);
 	if(!req.body) return res.sendStatus(400);
 
 	let patients = AllPatients();
 	let patient = {
 		id: null,
-		pet_type: request.body.patient.pet_type,
-		name: request.body.patient.name,
-		content: request.body.patient.content,
-		doctor_name: request.body.patient.doctor_name,
-		diagnosis: request.body.patient.diagnosis,
-		notes: request.body.patient.notes,
-		date: request.body.patient.date,
+		pet_type: req.body.patient.pet_type,
+		name: req.body.patient.name,
+		content: req.body.patient.content,
+		doctor_name: req.body.patient.doctor_name,
+		diagnosis: req.body.patient.diagnosis,
+		notes: req.body.patient.notes,
+		date: req.body.patient.date,
 		healthy: false
 	};
 
@@ -124,7 +125,7 @@ module.exports.addPatient = function(req, res) {
 	patient.id = maxId + 1;
 	patients.push(patient);
 	console.log('ADDED', patient);
-	RewriteNotes(patients);
+	RewritePatients(patients);
 	res.send(patient);
 }
 
@@ -133,17 +134,17 @@ module.exports.addPatient = function(req, res) {
 module.exports.updatePatient = function(req, res) {
 	if(!req.body) return res.sendStatus(400);
 	let patients = AllPatients();
-
+	
 	for (var i = patients.length - 1; i >= 0; i--) {
-		if (patients[i].id == req.body.note.id) {
-
+		
+		if (patients[i].id == req.body.patient.id) {		
 			patients[i].pet_type = req.body.patient.pet_type;
 			patients[i].name = req.body.patient.name;
 			patients[i].content = req.body.patient.content;
 			patients[i].doctor_name = req.body.patient.doctor_name;
 			patients[i].diagnosis = req.body.patient.diagnosis;
 			patients[i].notes = req.body.patient.notes;
-			patients[i].date = req.body.note.date;
+			patients[i].date = req.body.patient.date;
 			console.log('UPDATED', patients[i]);
 			break;
 		}
@@ -174,7 +175,7 @@ module.exports.deletePatient = function(req, res) {
         patients.splice(index, 1)[0];
         RewritePatients(patients);
 
-		response.sendStatus(200);
+		res.sendStatus(200);
     } else {
         res.status(404).send();
     }

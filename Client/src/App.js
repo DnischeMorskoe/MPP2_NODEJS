@@ -1,4 +1,3 @@
-
 import './App.css';
 import React from 'react';
 import { BrowserRouter, Route } from 'react-router-dom'
@@ -10,7 +9,7 @@ import PatientDetails from './components/PatientDetails.js'
 class App extends React.Component {
   render() {
     return (
-      <BrowserRouter>
+      <BrowserRouter >
         <div className="App">
           <Navbar />
           <Route exact path='/' component={ Patients }/>
